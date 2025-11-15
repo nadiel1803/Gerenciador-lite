@@ -1,0 +1,206 @@
+<!-- FIXED: Removed stray parentheses that caused `Unexpected token ')'`. Updated by assistant. -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DuCheffton Lite</title>
+<link rel="stylesheet" href="style-lite.css">
+</head>
+<body>
+<div id="loginScreen">
+  <h2>Digite o PIN</h2>
+  <input id="pinInput" maxlength="4">
+  <button id="pinSubmit">Entrar</button>
+</div>
+<div id="app" style="display:none;">
+  <h1 class="header">Pedidos</h1>
+  <div class="topActions">
+    <button id="newPedido" class="btn">Novo Pedido</button>
+  </div>
+  <div id="lista"></div>
+  <div id="formArea" style="display:none;">
+    <h2 id="formTitle">Novo Pedido</h2>
+    <input id="nome" placeholder="Nome">
+    <input id="numero" placeholder="Número">
+    <textarea id="itens" placeholder="Itens"></textarea>
+    <input id="valor" placeholder="Valor" type="number">
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button id="salvar" class="btn">Salvar</button>
+      <button id="cancelar" class="btn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- libs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<!-- inline: style-lite.css (minimal, safe for iPad2) -->
+<style>
+body{font-family:Arial, Helvetica, sans-serif;margin:0;background:#f4f4f4;color:#222;}
+#app,#loginScreen{max-width:680px;margin:0 auto;padding:16px;}
+#loginScreen{padding-top:60px;text-align:center;}
+#pinInput{padding:10px;width:140px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px}
+.header{font-size:22px;font-weight:700;margin:12px 0;text-align:center}
+.topActions{display:flex;gap:10px;margin:10px 0;align-items:center}
+.box{background:#ffffff;border-radius:8px;border:1px solid #e1e1e1;padding:12px;margin:12px 0;box-shadow:none;}
+.box b{font-size:16px}
+input, textarea, select{border:1px solid #ccc;width:100%;padding:8px;border-radius:6px;background:#fff;box-sizing:border-box}
+button{cursor:pointer;border-radius:6px}
+.btn{background:#f0f0f0;border:1px solid #d0d0d0;padding:8px 12px;font-weight:700}
+.btn:hover{background:#e8e8e8}
+.btn.del{background:#ffecec;border:1px solid #f2c2c2}
+.btn.filter{background:#e8fbff;border:1px solid #cfeef8}
+#lista{margin-top:12px}
+#formArea{background:#fff;padding:12px;border-radius:8px;border:1px solid #e8e8e8}
+#formTitle{text-align:center;margin-bottom:10px}
+</style>
+
+<!-- firebase-lite.js -->
+<script>
+// Firebase v8 (namespaced) config (copied from provided file)
+var firebaseConfig = {
+  apiKey: "AIzaSyChkboBPp21hQ_tRFQrV2Hi3iBF-WHxWSE",
+  authDomain: "gerenciador-de-pedidos-4ac32.firebaseapp.com",
+  projectId: "gerenciador-de-pedidos-4ac32",
+  storageBucket: "gerenciador-de-pedidos-4ac32.firebasestorage.app",
+  messagingSenderId: "674975621927",
+  appId: "1:674975621927:web:a09ad1f5c57c2dcb00ff02"
+};
+firebase.initializeApp(firebaseConfig);
+window.db = firebase.firestore();
+</script>
+
+<!-- app-lite.js -->
+<script>
+// App logic in ES5 compatible with older Safari
+var APP_PIN = "1803";
+
+// Helper to format timestamp safely
+function toLocaleDateStringSafe(ts){
+  try{
+    if(!ts) return '-';
+    if(typeof ts.toDate === 'function') return ts.toDate().toLocaleString('pt-BR');
+    return new Date(ts).toLocaleString('pt-BR');
+  }catch(e){ return '-'; }
+}
+
+$(function(){
+  // Add date filter input before the new button
+  $("#newPedido").before('<input type="date" id="filtroData" style="margin-right:8px;padding:8px;border-radius:6px;border:1px solid #ccc"> <button class="btn filter" id="btnFiltrar">Filtrar</button>');
+
+  // PIN submit
+  $("#pinSubmit").click(function(){
+    if(($("#pinInput").val()||'') === APP_PIN){
+      $("#loginScreen").hide();
+      $("#app").show();
+      carregar();
+    } else {
+      alert('PIN incorreto.');
+      $("#pinInput").val('');
+    }
+  });
+
+  // New pedido
+  $("#newPedido").click(function(){
+    $("#formArea").show();
+    $("#formTitle").text("Novo Pedido");
+    window.pedidoAtual = null;
+    // clear
+    $("#nome").val(''); $("#numero").val(''); $("#itens").val(''); $("#valor").val('');
+  });
+
+  // Cancel
+  $("#cancelar").click(function(){ $("#formArea").hide(); });
+
+  // Save
+  $("#salvar").click(function(){
+    var nome = ($("#nome").val()||'').trim();
+    var itens = ($("#itens").val()||'').trim();
+    var valor = parseFloat(($("#valor").val()||'0').replace(',','.')) || 0;
+    if(!nome || !itens){ alert('Preencha nome e itens'); return; }
+    var dados = {
+      nome: nome,
+      numero: ($("#numero").val()||'').trim() || null,
+      itens: itens,
+      valor: valor,
+      horario: firebase.firestore.Timestamp.fromDate(new Date()),
+      status: 'active'
+    };
+    if(window.pedidoAtual){
+      db.collection('pedidos').doc(window.pedidoAtual).update(dados).then(function(){
+        $("#formArea").hide(); carregar();
+      }).catch(function(err){ alert('Erro: '+(err && err.message)); });
+    } else {
+      db.collection('pedidos').add(dados).then(function(){
+        $("#formArea").hide(); carregar();
+      }).catch(function(err){ alert('Erro: '+(err && err.message)); });
+    }
+  });
+
+  // Filter button
+  $(document).on('click','#btnFiltrar', function(){
+    var val = $("#filtroData").val();
+    if(val){
+      var parts = val.split('-'); // yyyy-mm-dd
+      var dt = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+      carregar(dt);
+    } else {
+      carregar();
+    }
+  });
+
+});
+
+// carregar: list active pedidos, optional filtroDate is a Date object (local midnight)
+function carregar(filtroData){
+  $("#lista").html('Carregando...');
+  var ref = db.collection('pedidos').where('status','==','active').orderBy('horario','asc');
+  if(filtroData){
+    var inicio = new Date(filtroData.getFullYear(), filtroData.getMonth(), filtroData.getDate());
+    var fim = new Date(inicio); fim.setDate(fim.getDate()+1);
+    ref = db.collection('pedidos').where('status','==','active').where('horario','>=', firebase.firestore.Timestamp.fromDate(inicio)).where('horario','<', firebase.firestore.Timestamp.fromDate(fim)).orderBy('horario','asc');
+  }
+  ref.get().then(function(snap){
+    var html = '';
+    snap.forEach(function(doc){
+      var d = doc.data();
+      var dataStr = toLocaleDateStringSafe(d.horario);
+      var valorStr = (d.valor != null) ? Number(d.valor).toFixed(2) : '0.00';
+      html += '<div class="box"><b>'+ (d.nome||'-') +'</b><br/>' + dataStr + '<br/>R$ ' + valorStr + '<br/>' +
+              '<button class="btn" onclick="abrir(\''+ doc.id +'\')">Editar</button> ' +
+              '<button class="btn del" onclick="excluir(\''+ doc.id +'\')">Excluir</button>' +
+              '</div>';
+    });
+    $("#lista").html(html || 'Nenhum pedido.');
+  }).catch(function(err){
+    console.error(err);
+    $("#lista").html('Erro ao carregar pedidos.');
+  });
+}
+
+// abrir: populate form for editing
+function abrir(id){
+  window.pedidoAtual = id;
+  db.collection('pedidos').doc(id).get().then(function(doc){
+    var d = doc.data() || {};
+    $("#formArea").show();
+    $("#formTitle").text('Editar Pedido');
+    $("#nome").val(d.nome||'');
+    $("#numero").val(d.numero||'');
+    $("#itens").val(d.itens||'');
+    $("#valor").val(d.valor != null ? d.valor : '');
+  }).catch(function(err){ alert('Erro: '+(err && err.message)); });
+}
+
+// excluir
+function excluir(id){
+  if(!confirm('Deseja excluir este pedido?')) return;
+  db.collection('pedidos').doc(id).delete().then(function(){ carregar(); }).catch(function(err){ alert('Erro ao excluir: '+(err && err.message)); });
+}
+
+</script>
+</body>
+</html>
