@@ -1,19 +1,13 @@
-<!-- FIXED: Removed stray parentheses that caused `Unexpected token ')'`. Updated by assistant. -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DuCheffton Lite</title>
-<link rel="stylesheet" href="style-lite.css">
 </head>
 <body>
-<div id="loginScreen">
-  <h2>Digite o PIN</h2>
-  <input id="pinInput" maxlength="4">
-  <button id="pinSubmit">Entrar</button>
-</div>
-<div id="app" style="display:none;">
+
+<div id="app">
   <h1 class="header">Pedidos</h1>
   <div class="topActions">
     <button id="newPedido" class="btn">Novo Pedido</button>
@@ -25,6 +19,20 @@
     <input id="numero" placeholder="Número">
     <textarea id="itens" placeholder="Itens"></textarea>
     <input id="valor" placeholder="Valor" type="number">
+    
+    <div id="horarioArea" style="display:none; margin:10px 0; background: #f9f9f9; padding: 8px; border-radius: 6px; border: 1px solid #eee;">
+      <div style="display:flex; align-items: center; gap: 8px;">
+        <label for="horaInput" style="font-weight:bold;">Hora:</label>
+        <input id="horaInput" type="tel" maxlength="2" style="width:50px;padding:8px;text-align:center;font-size:16px;">
+        <label for="minutoInput" style="font-weight:bold;">Min:</label>
+        <input id="minutoInput" type="tel" maxlength="2" style="width:50px;padding:8px;text-align:center;font-size:16px;">
+      </div>
+      <div style="margin-top:8px;">
+        <input type="checkbox" id="updateHorario" style="width:auto;vertical-align:middle;">
+        <label for="updateHorario" style="vertical-align:middle;">Confirmar atualização do horário</label>
+      </div>
+    </div>
+
     <div style="margin-top:8px;display:flex;gap:8px;">
       <button id="salvar" class="btn">Salvar</button>
       <button id="cancelar" class="btn">Cancelar</button>
@@ -32,17 +40,13 @@
   </div>
 </div>
 
-<!-- libs -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-<!-- inline: style-lite.css (minimal, safe for iPad2) -->
 <style>
 body{font-family:Arial, Helvetica, sans-serif;margin:0;background:#f4f4f4;color:#222;}
-#app,#loginScreen{max-width:680px;margin:0 auto;padding:16px;}
-#loginScreen{padding-top:60px;text-align:center;}
-#pinInput{padding:10px;width:140px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px}
+#app{max-width:680px;margin:0 auto;padding:16px;}
 .header{font-size:22px;font-weight:700;margin:12px 0;text-align:center}
 .topActions{display:flex;gap:10px;margin:10px 0;align-items:center}
 .box{background:#ffffff;border-radius:8px;border:1px solid #e1e1e1;padding:12px;margin:12px 0;box-shadow:none;}
@@ -58,9 +62,8 @@ button{cursor:pointer;border-radius:6px}
 #formTitle{text-align:center;margin-bottom:10px}
 </style>
 
-<!-- firebase-lite.js -->
 <script>
-// Firebase v8 (namespaced) config (copied from provided file)
+// Firebase v8 (namespaced) config
 var firebaseConfig = {
   apiKey: "AIzaSyChkboBPp21hQ_tRFQrV2Hi3iBF-WHxWSE",
   authDomain: "gerenciador-de-pedidos-4ac32.firebaseapp.com",
@@ -73,10 +76,9 @@ firebase.initializeApp(firebaseConfig);
 window.db = firebase.firestore();
 </script>
 
-<!-- app-lite.js -->
 <script>
 // App logic in ES5 compatible with older Safari
-var APP_PIN = "1803";
+var pedidoAtualOriginalHorario = null; // Guarda o timestamp original ao editar
 
 // Helper to format timestamp safely
 function toLocaleDateStringSafe(ts){
@@ -88,28 +90,22 @@ function toLocaleDateStringSafe(ts){
 }
 
 $(function(){
-  // Add date filter input before the new button
+  // Add date filter
   $("#newPedido").before('<input type="date" id="filtroData" style="margin-right:8px;padding:8px;border-radius:6px;border:1px solid #ccc"> <button class="btn filter" id="btnFiltrar">Filtrar</button>');
 
-  // PIN submit
-  $("#pinSubmit").click(function(){
-    if(($("#pinInput").val()||'') === APP_PIN){
-      $("#loginScreen").hide();
-      $("#app").show();
-      carregar();
-    } else {
-      alert('PIN incorreto.');
-      $("#pinInput").val('');
-    }
-  });
+  // Carrega os pedidos imediatamente
+  carregar();
 
   // New pedido
   $("#newPedido").click(function(){
     $("#formArea").show();
     $("#formTitle").text("Novo Pedido");
     window.pedidoAtual = null;
+    pedidoAtualOriginalHorario = null;
     // clear
     $("#nome").val(''); $("#numero").val(''); $("#itens").val(''); $("#valor").val('');
+    // MUDANÇA: Esconde a área do horário
+    $("#horarioArea").hide();
   });
 
   // Cancel
@@ -121,19 +117,40 @@ $(function(){
     var itens = ($("#itens").val()||'').trim();
     var valor = parseFloat(($("#valor").val()||'0').replace(',','.')) || 0;
     if(!nome || !itens){ alert('Preencha nome e itens'); return; }
+    
     var dados = {
       nome: nome,
       numero: ($("#numero").val()||'').trim() || null,
       itens: itens,
       valor: valor,
-      horario: firebase.firestore.Timestamp.fromDate(new Date()),
       status: 'active'
     };
+
     if(window.pedidoAtual){
+      // EDITANDO
+      // MUDANÇA: Verifica se o checkbox de atualizar horário está marcado
+      if ($("#updateHorario").is(':checked')) {
+        var H = parseInt($("#horaInput").val() || '0', 10);
+        var M = parseInt($("#minutoInput").val() || '0', 10);
+
+        if (H < 0 || H > 23 || M < 0 || M > 59) {
+          alert('Hora ou minuto inválido.'); return;
+        }
+
+        // Pega a data original do pedido (guardada ao abrir)
+        var newDate = (pedidoAtualOriginalHorario) ? pedidoAtualOriginalHorario.toDate() : new Date();
+        // Atualiza SÓ a hora e o minuto, mantendo o dia/mês/ano original
+        newDate.setHours(H, M, 0, 0); // H, M, Sec, MS
+        
+        dados.horario = firebase.firestore.Timestamp.fromDate(newDate);
+      }
+      // Se não estiver marcado, 'horario' não é enviado e o Firebase mantém o valor original
       db.collection('pedidos').doc(window.pedidoAtual).update(dados).then(function(){
         $("#formArea").hide(); carregar();
       }).catch(function(err){ alert('Erro: '+(err && err.message)); });
     } else {
+      // NOVO PEDIDO
+      dados.horario = firebase.firestore.Timestamp.fromDate(new Date());
       db.collection('pedidos').add(dados).then(function(){
         $("#formArea").hide(); carregar();
       }).catch(function(err){ alert('Erro: '+(err && err.message)); });
@@ -154,7 +171,7 @@ $(function(){
 
 });
 
-// carregar: list active pedidos, optional filtroDate is a Date object (local midnight)
+// carregar
 function carregar(filtroData){
   $("#lista").html('Carregando...');
   var ref = db.collection('pedidos').where('status','==','active').orderBy('horario','asc');
@@ -192,6 +209,25 @@ function abrir(id){
     $("#numero").val(d.numero||'');
     $("#itens").val(d.itens||'');
     $("#valor").val(d.valor != null ? d.valor : '');
+    
+    // MUDANÇA: Popular e exibir a área do horário
+    var dataOriginal = new Date(); // Default é 'agora'
+    if(d.horario && typeof d.horario.toDate === 'function') {
+      pedidoAtualOriginalHorario = d.horario; // Guarda o Timestamp original
+      dataOriginal = d.horario.toDate();
+    } else {
+      pedidoAtualOriginalHorario = firebase.firestore.Timestamp.fromDate(dataOriginal); // Guarda um 'agora'
+    }
+    
+    // Preenche os inputs (com '0' à esquerda se for < 10, para ficar HH/MM)
+    var H = dataOriginal.getHours();
+    var M = dataOriginal.getMinutes();
+    $("#horaInput").val(H < 10 ? '0' + H : H);
+    $("#minutoInput").val(M < 10 ? '0' + M : M);
+    
+    $("#updateHorario").prop('checked', false); // Começa desmarcado
+    $("#horarioArea").show();
+
   }).catch(function(err){ alert('Erro: '+(err && err.message)); });
 }
 
