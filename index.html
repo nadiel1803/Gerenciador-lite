@@ -59,8 +59,7 @@
         <label for="minutoInput" style="font-weight:bold;">Min:</label>
         <input id="minutoInput" type="tel" maxlength="2" style="width:50px;padding:8px;text-align:center;font-size:16px;">
       </div>
-      
-      </div>
+    </div>
 
     <div style="margin-top:12px;display:flex;gap:8px;">
       <button id="salvar" class="btn">Salvar</button>
@@ -80,6 +79,18 @@ body{font-family:Arial, Helvetica, sans-serif;margin:0;background:#f4f4f4;color:
 .topActions{display:flex;gap:10px;margin:10px 0;align-items:center}
 .box{background:#ffffff;border-radius:8px;border:1px solid #e1e1e1;padding:12px;margin:12px 0;box-shadow:none;}
 .box b{font-size:16px}
+/* MUDANÇA: Box de itens na lista */
+.box .itens-display{
+  background:#f9f9f9; 
+  padding: 6px 8px; 
+  margin: 6px 0; 
+  border-radius: 4px; 
+  border: 1px solid #eee;
+  font-size: 14px;
+  line-height: 1.4;
+  /* Preserva quebras de linha do textarea */
+  white-space: pre-wrap; 
+}
 input, textarea, select{border:1px solid #ccc;width:100%;padding:8px;border-radius:6px;background:#fff;box-sizing:border-box}
 label{font-size:12px;font-weight:bold;color:#444;}
 h3{font-size:16px; margin: 12px 0 8px 0; border-bottom: 1px solid #ddd; padding-bottom: 4px;}
@@ -110,6 +121,16 @@ window.db = firebase.firestore();
 <script>
 // App logic in ES5 compatible with older Safari
 var pedidoAtualOriginalHorario = null; // Guarda o timestamp original ao editar
+
+// MUDANÇA: Helper para escapar HTML (por segurança)
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+}
 
 // Helper to format timestamp safely
 function toLocaleDateStringSafe(ts){
@@ -187,42 +208,31 @@ $(function(){
 
     if(window.pedidoAtual){
       // EDITANDO
-      // MUDANÇA: Lógica de atualização do horário sem checkbox
-      
-      // 1. Obter o novo horário dos inputs
       var dateStr = $("#horarioData").val(); // "YYYY-MM-DD"
       var H = parseInt($("#horaInput").val() || '0', 10);
       var M = parseInt($("#minutoInput").val() || '0', 10);
-      
       var newDate;
-      
       if (!dateStr || dateStr.split('-').length !== 3) {
         alert('Por favor, selecione uma data válida.'); return;
       }
       if (H < 0 || H > 23 || M < 0 || M > 59) {
         alert('Hora ou minuto inválido.'); return;
       }
-
       var parts = dateStr.split('-');
       var Y = parseInt(parts[0], 10);
       var Mo = parseInt(parts[1], 10) - 1; // JS months 0-indexed
       var D = parseInt(parts[2], 10);
-      
-      newDate = new Date(Y, Mo, D, H, M, 0, 0); // Novo horário, com seg/ms zerados
+      newDate = new Date(Y, Mo, D, H, M, 0, 0);
 
-      // 2. Obter o horário original (guardado no 'abrir') e normalizá-lo
-      var originalDate = new Date(); // default
+      var originalDate = new Date();
       if (pedidoAtualOriginalHorario) {
           originalDate = pedidoAtualOriginalHorario.toDate();
       }
-      originalDate.setSeconds(0, 0); // Normaliza o original, zerando seg/ms
+      originalDate.setSeconds(0, 0); 
 
-      // 3. Comparar
       if (newDate.getTime() !== originalDate.getTime()) {
-        // O horário foi alterado pelo usuário, então atualize-o
         dados.horario = firebase.firestore.Timestamp.fromDate(newDate);
       }
-      // Se forem iguais, 'dados.horario' não é definido, e o Firebase não o alterará.
       
       db.collection('pedidos').doc(window.pedidoAtual).update(dados).then(function(){
         $("#formArea").hide(); carregar();
@@ -251,7 +261,7 @@ $(function(){
 
 });
 
-// carregar
+// MUDANÇA: Função 'carregar' atualizada
 function carregar(filtroData){
   $("#lista").html('Carregando...');
   var ref = db.collection('pedidos').where('status','==','active').orderBy('horario','asc');
@@ -264,20 +274,38 @@ function carregar(filtroData){
     var html = '';
     snap.forEach(function(doc){
       var d = doc.data();
+      // Dados básicos
       var dataStr = toLocaleDateStringSafe(d.horario);
       var valorStr = (d.valor != null) ? Number(d.valor).toFixed(2) : '0.00';
-      
-      var tipoStr = d.tipoEntrega || 'Entrega';
       var pagoStr = d.pago ? ' (Pago)' : '';
+      
+      // Detalhes do Cliente
+      var nomeStr = escapeHTML(d.nome || '-');
+      var numeroStr = d.numero ? 'Tel: ' + escapeHTML(d.numero) + '<br/>' : ''; // Mostra só se existir
+      
+      // Detalhes da Entrega
+      var tipoStr = escapeHTML(d.tipoEntrega || 'Entrega');
+      var enderecoStr = (tipoStr === 'Entrega') ? (': ' + escapeHTML(d.endereco||'N/D')) : '';
+      
+      // Detalhes do Pedido (Itens)
+      // Usamos escapeHTML e a classe 'itens-display' (com white-space: pre-wrap)
+      // para formatar as quebras de linha com segurança.
+      var itensStr = escapeHTML(d.itens || '-');
 
-      html += '<div class="box"><b>'+ (d.nome||'-') +'</b>' + pagoStr + '<br/>' +
-              '<i>' + tipoStr + (tipoStr === 'Entrega' ? (': ' + (d.endereco||'N/D')) : '') + '</i><br/>' +
+      html += '<div class="box">' +
+              '<b>'+ nomeStr +'</b>' + pagoStr + '<br/>' +
+              numeroStr +
+              '<i>' + tipoStr + enderecoStr + '</i>' +
+              
+              // Itens do Pedido
+              '<div class="itens-display">' + itensStr + '</div>' +
+              
               dataStr + '<br/>R$ ' + valorStr + '<br/>' +
               '<button class="btn" onclick="abrir(\''+ doc.id +'\')">Editar</button> ' +
               '<button class="btn del" onclick="excluir(\''+ doc.id +'\')">Excluir</button>' +
               '</div>';
     });
-    $("#lista").html(html || 'Nenhum pedido.');
+    $("#lista").html(html || 'Nenhuma pedido.');
   }).catch(function(err){
     console.error(err);
     $("#lista").html('Erro ao carregar pedidos.');
@@ -306,9 +334,9 @@ function abrir(id){
       $("#enderecoArea").hide();
     }
 
-    var dataOriginal = new Date(); // Default
+    var dataOriginal = new Date();
     if(d.horario && typeof d.horario.toDate === 'function') {
-      pedidoAtualOriginalHorario = d.horario; // MUDANÇA: Guarda o Timestamp original
+      pedidoAtualOriginalHorario = d.horario;
       dataOriginal = d.horario.toDate();
     } else {
       pedidoAtualOriginalHorario = firebase.firestore.Timestamp.fromDate(dataOriginal);
