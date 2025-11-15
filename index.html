@@ -15,12 +15,44 @@
   <div id="lista"></div>
   <div id="formArea" style="display:none;">
     <h2 id="formTitle">Novo Pedido</h2>
-    <input id="nome" placeholder="Nome">
-    <input id="numero" placeholder="Número">
-    <textarea id="itens" placeholder="Itens"></textarea>
-    <input id="valor" placeholder="Valor" type="number">
+    
+    <h3>Dados do Cliente</h3>
+    <label for="nome">Nome</label>
+    <input id="nome">
+    
+    <label for="numero" style="margin-top:8px;display:block;">Número do cliente</label>
+    <input id="numero" placeholder="Opcional">
+    
+    <label for="tipoEntrega" style="margin-top:8px;display:block;">Entrega ou Retirada?</label>
+    <select id="tipoEntrega">
+      <option value="Entrega">Entrega</option>
+      <option value="Retirada">Retirada</option>
+    </select>
+    
+    <div id="enderecoArea">
+      <label for="endereco" style="margin-top:8px;display:block;">Endereço</label>
+      <input id="endereco" placeholder="Endereço">
+    </div>
+
+    <h3 style="margin-top: 16px;">Detalhes do Pedido</h3>
+    <label for="itens">Itens do pedido</label>
+    <textarea id="itens" placeholder="Ex: 2x pizza, 1x refrigerante"></textarea>
+    
+    <div style="display:flex; gap: 8px; margin-top:8px;">
+      <div style="width: 50%;">
+        <label for="valor">Valor (R$)</label>
+        <input id="valor" placeholder="0.00" type="number">
+      </div>
+       <div id="pagoArea" style="width: 50%; text-align:center; padding-top:20px; background:#f9f9f9; border:1px solid #eee; border-radius:6px;">
+        <input type="checkbox" id="pago" style="width:auto;vertical-align:middle;">
+        <label for="pago" style="vertical-align:middle;">Pedido pago</label>
+      </div>
+    </div>
     
     <div id="horarioArea" style="display:none; margin:10px 0; background: #f9f9f9; padding: 8px; border-radius: 6px; border: 1px solid #eee;">
+      <label for="horarioData" style="font-weight:bold;">Data:</label>
+      <input type="date" id="horarioData" style="margin-bottom: 8px;">
+      
       <div style="display:flex; align-items: center; gap: 8px;">
         <label for="horaInput" style="font-weight:bold;">Hora:</label>
         <input id="horaInput" type="tel" maxlength="2" style="width:50px;padding:8px;text-align:center;font-size:16px;">
@@ -33,7 +65,7 @@
       </div>
     </div>
 
-    <div style="margin-top:8px;display:flex;gap:8px;">
+    <div style="margin-top:12px;display:flex;gap:8px;">
       <button id="salvar" class="btn">Salvar</button>
       <button id="cancelar" class="btn">Cancelar</button>
     </div>
@@ -52,6 +84,8 @@ body{font-family:Arial, Helvetica, sans-serif;margin:0;background:#f4f4f4;color:
 .box{background:#ffffff;border-radius:8px;border:1px solid #e1e1e1;padding:12px;margin:12px 0;box-shadow:none;}
 .box b{font-size:16px}
 input, textarea, select{border:1px solid #ccc;width:100%;padding:8px;border-radius:6px;background:#fff;box-sizing:border-box}
+label{font-size:12px;font-weight:bold;color:#444;}
+h3{font-size:16px; margin: 12px 0 8px 0; border-bottom: 1px solid #ddd; padding-bottom: 4px;}
 button{cursor:pointer;border-radius:6px}
 .btn{background:#f0f0f0;border:1px solid #d0d0d0;padding:8px 12px;font-weight:700}
 .btn:hover{background:#e8e8e8}
@@ -89,12 +123,30 @@ function toLocaleDateStringSafe(ts){
   }catch(e){ return '-'; }
 }
 
+// MUDANÇA: Helper para formatar data para YYYY-MM-DD
+function toYYYYMMDD(date) {
+  var Y = date.getFullYear();
+  var Mo = date.getMonth() + 1;
+  var D = date.getDate();
+  return Y + '-' + (Mo < 10 ? '0' + Mo : Mo) + '-' + (D < 10 ? '0' + D : D);
+}
+
 $(function(){
   // Add date filter
   $("#newPedido").before('<input type="date" id="filtroData" style="margin-right:8px;padding:8px;border-radius:6px;border:1px solid #ccc"> <button class="btn filter" id="btnFiltrar">Filtrar</button>');
 
   // Carrega os pedidos imediatamente
   carregar();
+
+  // MUDANÇA: Mostrar/esconder Endereço
+  $("#tipoEntrega").change(function(){
+    if($(this).val() === 'Entrega'){
+      $("#enderecoArea").show();
+    } else {
+      $("#enderecoArea").hide();
+      $("#endereco").val(''); // Limpa se mudar para 'Retirada'
+    }
+  });
 
   // New pedido
   $("#newPedido").click(function(){
@@ -104,7 +156,11 @@ $(function(){
     pedidoAtualOriginalHorario = null;
     // clear
     $("#nome").val(''); $("#numero").val(''); $("#itens").val(''); $("#valor").val('');
-    // MUDANÇA: Esconde a área do horário
+    // MUDANÇA: Limpar novos campos
+    $("#tipoEntrega").val('Entrega');
+    $("#endereco").val('');
+    $("#pago").prop('checked', false);
+    $("#enderecoArea").show(); // Default é Entrega
     $("#horarioArea").hide();
   });
 
@@ -118,33 +174,47 @@ $(function(){
     var valor = parseFloat(($("#valor").val()||'0').replace(',','.')) || 0;
     if(!nome || !itens){ alert('Preencha nome e itens'); return; }
     
+    // MUDANÇA: Ler novos campos
+    var tipoEntrega = $("#tipoEntrega").val();
+    var endereco = (tipoEntrega === 'Entrega') ? ($("#endereco").val()||'').trim() : null;
+    var pago = $("#pago").is(':checked');
+
     var dados = {
       nome: nome,
       numero: ($("#numero").val()||'').trim() || null,
       itens: itens,
       valor: valor,
-      status: 'active'
+      status: 'active',
+      // MUDANÇA: Salvar novos campos
+      tipoEntrega: tipoEntrega,
+      endereco: endereco,
+      pago: pago
     };
 
     if(window.pedidoAtual){
       // EDITANDO
-      // MUDANÇA: Verifica se o checkbox de atualizar horário está marcado
       if ($("#updateHorario").is(':checked')) {
+        // MUDANÇA: Ler data e hora dos inputs
+        var dateStr = $("#horarioData").val(); // "YYYY-MM-DD"
         var H = parseInt($("#horaInput").val() || '0', 10);
         var M = parseInt($("#minutoInput").val() || '0', 10);
-
+        
+        if (!dateStr || dateStr.split('-').length !== 3) {
+          alert('Por favor, selecione uma data válida.'); return;
+        }
         if (H < 0 || H > 23 || M < 0 || M > 59) {
           alert('Hora ou minuto inválido.'); return;
         }
 
-        // Pega a data original do pedido (guardada ao abrir)
-        var newDate = (pedidoAtualOriginalHorario) ? pedidoAtualOriginalHorario.toDate() : new Date();
-        // Atualiza SÓ a hora e o minuto, mantendo o dia/mês/ano original
-        newDate.setHours(H, M, 0, 0); // H, M, Sec, MS
+        var parts = dateStr.split('-');
+        var Y = parseInt(parts[0], 10);
+        var Mo = parseInt(parts[1], 10) - 1; // JS months 0-indexed
+        var D = parseInt(parts[2], 10);
         
+        var newDate = new Date(Y, Mo, D, H, M, 0, 0);
         dados.horario = firebase.firestore.Timestamp.fromDate(newDate);
       }
-      // Se não estiver marcado, 'horario' não é enviado e o Firebase mantém o valor original
+      
       db.collection('pedidos').doc(window.pedidoAtual).update(dados).then(function(){
         $("#formArea").hide(); carregar();
       }).catch(function(err){ alert('Erro: '+(err && err.message)); });
@@ -186,7 +256,14 @@ function carregar(filtroData){
       var d = doc.data();
       var dataStr = toLocaleDateStringSafe(d.horario);
       var valorStr = (d.valor != null) ? Number(d.valor).toFixed(2) : '0.00';
-      html += '<div class="box"><b>'+ (d.nome||'-') +'</b><br/>' + dataStr + '<br/>R$ ' + valorStr + '<br/>' +
+      
+      // MUDANÇA: Mostrar mais detalhes no card
+      var tipoStr = d.tipoEntrega || 'Entrega';
+      var pagoStr = d.pago ? ' (Pago)' : '';
+
+      html += '<div class="box"><b>'+ (d.nome||'-') +'</b>' + pagoStr + '<br/>' +
+              '<i>' + tipoStr + (tipoStr === 'Entrega' ? (': ' + (d.endereco||'N/D')) : '') + '</i><br/>' +
+              dataStr + '<br/>R$ ' + valorStr + '<br/>' +
               '<button class="btn" onclick="abrir(\''+ doc.id +'\')">Editar</button> ' +
               '<button class="btn del" onclick="excluir(\''+ doc.id +'\')">Excluir</button>' +
               '</div>';
@@ -210,16 +287,31 @@ function abrir(id){
     $("#itens").val(d.itens||'');
     $("#valor").val(d.valor != null ? d.valor : '');
     
-    // MUDANÇA: Popular e exibir a área do horário
-    var dataOriginal = new Date(); // Default é 'agora'
+    // MUDANÇA: Popular novos campos
+    $("#tipoEntrega").val(d.tipoEntrega || 'Entrega');
+    $("#endereco").val(d.endereco || '');
+    $("#pago").prop('checked', d.pago || false);
+    
+    // MUDANÇA: Mostrar/esconder endereço
+    if($("#tipoEntrega").val() === 'Entrega'){
+      $("#enderecoArea").show();
+    } else {
+      $("#enderecoArea").hide();
+    }
+
+    // MUDANÇA: Popular e exibir a área do horário (com data)
+    var dataOriginal = new Date(); // Default
     if(d.horario && typeof d.horario.toDate === 'function') {
-      pedidoAtualOriginalHorario = d.horario; // Guarda o Timestamp original
+      pedidoAtualOriginalHorario = d.horario; // Guarda o Timestamp
       dataOriginal = d.horario.toDate();
     } else {
-      pedidoAtualOriginalHorario = firebase.firestore.Timestamp.fromDate(dataOriginal); // Guarda um 'agora'
+      pedidoAtualOriginalHorario = firebase.firestore.Timestamp.fromDate(dataOriginal);
     }
     
-    // Preenche os inputs (com '0' à esquerda se for < 10, para ficar HH/MM)
+    // Formata para YYYY-MM-DD
+    $("#horarioData").val(toYYYYMMDD(dataOriginal));
+    
+    // Preenche HH:MM
     var H = dataOriginal.getHours();
     var M = dataOriginal.getMinutes();
     $("#horaInput").val(H < 10 ? '0' + H : H);
