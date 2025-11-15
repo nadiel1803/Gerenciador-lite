@@ -1,177 +1,83 @@
-<!doctype html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DuCheffton — Gerenciador de Pedidos (Lite)</title>
-  <link rel="stylesheet" href="style-lite.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DuCheffton Lite</title>
+<link rel="stylesheet" href="style-lite.css">
 </head>
 <body>
-  <div id="app" class="hidden">
-
-    <div id="listPage" class="page active">
-      <header class="topbar">
-        <div class="brand">
-          <h1>DuCheffton</h1>
-          <span class="sub">Gerenciador de Pedidos</span>
-        </div>
-        <div class="header-actions">
-          <button id="filterBtn" class="btn ghost">Filtros</button>
-          <button id="completedBtn" class="btn ghost">Concluídos</button>
-          <button id="addPedidoBtn" class="btn primary">➕ Novo</button>
-          
-          <div id="hamburgerMenu" class="hamburger-menu">
-            <button id="hamburgerBtn" class="hamburger-btn" aria-label="Abrir menu">
-              <span></span><span></span><span></span>
-            </button>
-            <nav id="mobileNav" class="mobile-nav">
-              <button id="mobileAddPedidoBtn" class="nav-btn">➕ Novo Pedido</button>
-              <button id="mobileFilterBtn" class="nav-btn">Filtros e Ordenação</button>
-              <button id="mobileCompletedBtn" class="nav-btn">Pedidos Concluídos</button>
-            </nav>
-          </div>
-        </div>
-      </header>
-
-      <div class="list-page-container">
-        <main class="main-content">
-          <div class="list-header">
-            <h2>Pedidos Ativos</h2>
-            <div id="countInfo" class="muted">—</div>
-          </div>
-          <div id="pedidosList" class="pedidos-grid"></div>
-          <div id="emptyMsg" class="empty-msg">Nenhum pedido encontrado.</div>
-        </main>
-      </div>
-    </div>
-
-    <div id="detailsPage" class="page">
-      <header class="topbar">
-        <button id="backBtn" class="btn ghost">‹ Voltar</button>
-        <h2 id="detailsTitle" class="page-title">Novo Pedido</h2>
-        <button id="saveBtn" type="submit" form="pedidoForm" class="btn primary">Salvar</button>
-      </header>
-      <main class="main-content">
-        <form id="pedidoForm">
-          <input type="hidden" id="pedidoId" />
-          <div class="form-grid">
-            <div class="card">
-              <h3>Dados do Cliente</h3>
-              <label>Nome <input id="nome" required maxlength="80" /></label>
-              <label>Número do cliente <input id="numero" inputmode="numeric" placeholder="Opcional" /></label>
-              <label>Entrega ou Retirada?
-                <select id="tipoEntrega">
-                  <option value="entrega">Entrega</option>
-                  <option value="retirada">Retirada</option>
-                </select>
-              </label>
-              <label id="enderecoLabel">Endereço <input id="endereco" /></label>
-            </div>
-            <div class="card">
-              <h3>Detalhes do Pedido</h3>
-              <label>Itens do pedido <textarea id="itens" rows="4" required placeholder="Ex: 2x pizza, 1x refrigerante"></textarea></label>
-              <div class="row">
-                <label style="flex:1">Horário <input id="horario" type="datetime-local" required /></label>
-                <label style="flex:0 0 120px">Valor (R$) <input id="valor" type="number" step="0.01" min="0" required /></label>
-              </div>
-              <label class="paid-label"><input id="pago" type="checkbox" /> Pedido pago</label>
-            </div>
-          </div>
-        </form>
-        <div class="details-actions">
-          <button id="printBtn" class="btn ghost">Imprimir Pedido</button>
-          <button id="deleteBtn" class="btn ghost danger">Deletar Pedido</button>
-        </div>
-      </main>
-    </div>
+<div id="loginScreen">
+  <h2>Digite o PIN</h2>
+  <input id="pinInput" maxlength="4">
+  <button id="pinSubmit">Entrar</button>
+</div>
+<div id="app" style="display:none;">
+  <h1>Pedidos</h1>
+  <button id="newPedido">Novo Pedido</button>
+  <div id="lista"></div>
+  <div id="formArea" style="display:none;">
+    <h2 id="formTitle">Novo Pedido</h2>
+    <input id="nome" placeholder="Nome">
+    <input id="numero" placeholder="Número">
+    <textarea id="itens" placeholder="Itens"></textarea>
+    <input id="valor" placeholder="Valor" type="number">
+    <button id="salvar">Salvar</button>
+    <button id="cancelar">Cancelar</button>
   </div>
-
-  <div id="filterControls" class="hidden">
-    <div class="card">
-      <h3>Filtro por data</h3>
-      <div id="calendar"></div>
-      <div class="calendar-controls">
-        <button id="prevMonth" class="btn ghost">‹</button>
-        <div id="monthYear"></div>
-        <button id="nextMonth" class="btn ghost">›</button>
-      </div>
-      <div style="margin-top:8px;">
-        <button id="clearFilter" class="btn ghost">Limpar filtro</button>
-      </div>
-    </div>
-    <div class="card">
-      <h3>Ordenar</h3>
-      <div class="row">
-        <label><input type="radio" name="order" value="asc" checked /> Crescente</label>
-        <label><input type="radio" name="order" value="desc" /> Decrescente</label>
-      </div>
-      <div style="margin-top:10px;">
-        <button id="deleteDayBtn" class="btn ghost danger">Deletar pedidos deste dia</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="filterModal" class="modal hidden" aria-hidden="true">
-    <div class="modal-backdrop"></div>
-    <div class="modal-dialog" role="dialog" aria-modal="true">
-      <header class="modal-header">
-        <h3 class="modal-title">Filtros e Ordenação</h3>
-        <button id="filterCloseBtn" class="btn ghost" title="Fechar">✕</button>
-      </header>
-      <div class="modal-body"></div>
-    </div>
-  </div>
-
-  <div id="completedModal" class="modal hidden" aria-hidden="true">
-    <div class="modal-backdrop"></div>
-    <div class="modal-dialog" role="dialog" aria-modal="true">
-      <header class="modal-header">
-        <h3 class="modal-title">Pedidos Concluídos</h3>
-        <button id="completedCloseBtn" class="btn ghost" title="Fechar">✕</button>
-      </header>
-      <div id="completedList" class="modal-body">
-        </div>
-    </div>
-  </div>
-
-
-  <div id="loginScreen" class="login-screen">
-    <div class="login-card">
-      <h2>Entrar com PIN</h2>
-      <p>Insira seu PIN para acessar o gerenciador.</p>
-      <div class="pin-input-row">
-        <input id="pinInput" inputmode="numeric" maxlength="6" placeholder="••••" readonly />
-      </div>
-      
-      <div id="numpad" class="numpad">
-        <button class="numpad-key">1</button><button class="numpad-key">2</button><button class="numpad-key">3</button>
-        <button class="numpad-key">4</button><button class="numpad-key">5</button><button class="numpad-key">6</button>
-        <button class="numpad-key">7</button><button class="numpad-key">8</button><button class="numpad-key">9</button>
-        <button class="numpad-key" data-action="clear">C</button>
-        <button class="numpad-key">0</button>
-        <button class="numpad-key" data-action="backspace">⌫</button>
-      </div>
-
-      <div style="margin-top:10px;">
-        <label class="row" style="justify-content:center;">
-          <input type="checkbox" id="rememberCheck" />
-          <span class="small muted">Manter conectado</span>
-        </label>
-      </div>
-      <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;">
-        <button id="pinSubmit" class="btn primary">Entrar</button>
-        <button id="pinHelp" class="btn ghost">Ajuda</button>
-      </div>
-      <div id="loginMsg" class="muted small" style="margin-top:12px;"></div>
-    </div>
-  </div>
-
-  <!-- libs: jQuery 1.x and Firebase v8 (namespaced) -->
-  <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-  <script src="firebase-lite.js"></script>
-  <script src="app-lite.js"></script>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="firebase-lite.js"></script>
+<script src="app-lite.js"></script>
 </body>
-</html>
+</html><!-- style-lite.css --><style>
+body{font-family:Arial;margin:10px;background:#eee;color:#000;}
+#loginScreen{text-align:center;margin-top:40px;}
+#lista div{background:#fff;padding:10px;margin:8px 0;border:1px solid #ccc;}
+button{padding:8px 12px;margin:4px 0;}
+#formArea input, #formArea textarea{width:100%;margin:6px 0;padding:8px;}
+</style><!-- firebase-lite.js --><script>
+var firebaseConfig={ apiKey: "AIzaSyChkboBPp21hQ_tRFQrV2Hi3iBF-WHxWSE",
+  authDomain: "gerenciador-de-pedidos-4ac32.firebaseapp.com",
+  projectId: "gerenciador-de-pedidos-4ac32",
+  storageBucket: "gerenciador-de-pedidos-4ac32.firebasestorage.app",
+  messagingSenderId: "674975621927",
+  appId: "1:674975621927:web:a09ad1f5c57c2dcb00ff02" };
+firebase.initializeApp(firebaseConfig);
+window.db=firebase.firestore();
+</script><!-- app-lite.js --><script>
+var APP_PIN="1803";
+$(function(){
+  $("#pinSubmit").click(function(){
+    if($("#pinInput").val()===APP_PIN){
+      $("#loginScreen").hide();$("#app").show();carregar();
+    }
+  });
+
+  $("#newPedido").click(function(){
+    $("#formArea").show();$("#formTitle").text("Novo Pedido");window.pedidoAtual=null;
+  });
+
+  $("#cancelar").click(function(){ $("#formArea").hide(); });
+
+  $("#salvar").click(function(){
+    var dados={nome:$("#nome").val(),numero:$("#numero").val(),itens:$("#itens").val(),valor:parseFloat($("#valor").val())||0,horario:new Date(),status:"active"};
+    if(window.pedidoAtual){db.collection("pedidos").doc(window.pedidoAtual).update(dados);}else{db.collection("pedidos").add(dados);}$("#formArea").hide();carregar();
+  });
+});
+
+function carregar(){
+  $("#lista").html("Carregando...");
+  db.collection("pedidos").where("status","==","active").orderBy("horario","asc").get().then(function(snap){
+    var html="";
+    snap.forEach(function(doc){var d=doc.data();html+="<div onclick=\"abrir('"+doc.id+"')\"><b>"+d.nome+"</b><br/>R$ "+d.valor.toFixed(2)+"</div>";});
+    $("#lista").html(html||"Nenhum pedido.");
+  });
+}
+
+function abrir(id){
+  window.pedidoAtual=id;
+  db.collection("pedidos").doc(id).get().then(function(doc){var d=doc.data();$("#formArea").show();$("#formTitle").text("Editar Pedido");$("#nome").val(d.nome);$("#numero").val(d.numero);$("#itens").val(d.itens);$("#valor").val(d.valor);});
+}
+</script>
