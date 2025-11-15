@@ -1,1 +1,0 @@
-# Gerenciador-lite
