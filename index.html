@@ -46,7 +46,7 @@
         <label for="itens">Itens do pedido</label>
         <textarea id="itens" placeholder="Ex: 2x pizza, 1x refrigerante"></textarea>
         
-        <div class="form-row"> <div class="form-field-half" id="horarioArea" style="display:none;"> 
+        <div class="form-row"> <div class="form-field-half" id="horarioArea"> 
             <label>Horário</label>
             <input type="date" id="horarioData" style="margin-bottom: 4px;">
             <div id="horarioInputsWrapper">
@@ -65,10 +65,14 @@
              <input type="checkbox" id="pago">
           </div>
           <div class="form-field-half" id="pagoLabelWrapper">
-             <label for="pago">Pedido pago</label> 
+            <label for="pago">Pedido pago</label> 
           </div>
         </div>
-      </div> </div> <div style="margin-top:12px;display:flex;gap:8px;">
+      </div> 
+
+    </div> 
+
+    <div style="margin-top:12px;display:flex;gap:8px;">
       <button id="salvar" class="btn">Salvar</button>
       <button id="cancelar" class="btn">Cancelar</button>
     </div>
@@ -97,8 +101,6 @@ body{font-family:Arial, Helvetica, sans-serif;margin:0;background:#f4f4f4;color:
   white-space: pre-wrap; 
 }
 input, textarea, select{border:1px solid #ccc;width:100%;padding:8px;border-radius:6px;background:#fff;box-sizing:border-box}
-
-/* MUDANÇA: Labels agora são blocos */
 label{
   font-size:12px;
   font-weight:bold;
@@ -115,30 +117,26 @@ button{cursor:pointer;border-radius:6px}
 #lista{margin-top:12px}
 #formArea{background:#fff;padding:12px;border-radius:8px;border:1px solid #e8e8e8}
 #formTitle{text-align:center;margin-bottom:10px}
-
-/* MUDANÇA: Novas classes de layout do formulário */
 .form-columns-wrapper {
   display: flex;
   gap: 16px;
 }
 .form-column {
-  flex: 1; /* Cada coluna ocupa 50% */
-  min-width: 0; /* Correção para flexbox */
+  flex: 1;
+  min-width: 0; 
 }
 .form-row {
   display: flex;
   gap: 8px;
   margin-top: 8px;
-  align-items: flex-start; /* Alinha topo */
+  align-items: flex-start; 
 }
 .form-field-half {
-  flex: 1; /* Cada campo ocupa 50% da linha */
-  min-width: 0; /* Correção para flexbox */
+  flex: 1;
+  min-width: 0; 
 }
-
-/* MUDANÇA: Estilos específicos dos inputs */
 #itens { 
-  height: 104px; /* Mais próximo da imagem */
+  height: 104px; 
 }
 #horarioInputsWrapper { 
   display: flex; 
@@ -147,21 +145,16 @@ button{cursor:pointer;border-radius:6px}
 #horaInput, #minutoInput { 
   text-align: center; 
 }
-
-/* MUDANÇA: Layout "Pedido Pago" (como na imagem) */
 #pagoCheckboxWrapper { 
   padding-top: 5px; 
-  /* Checkbox alinhado à esquerda (padrão) */
 }
 #pagoLabelWrapper label { 
   padding-top: 5px; 
   font-weight: normal; 
   display: block; 
 }
-
-/* MUDANÇA: Override para a label do checkbox "pago" */
 label[for="pago"] {
-  display: inline-block; /* para ficar ao lado do checkbox */
+  display: inline-block; 
   margin-bottom: 0;
   font-weight: normal;
 }
@@ -182,7 +175,7 @@ window.db = firebase.firestore();
 </script>
 
 <script>
-// App logic (NENHUMA MUDANÇA NECESSÁRIA AQUI)
+// App logic
 var pedidoAtualOriginalHorario = null; 
 
 function escapeHTML(str) {
@@ -222,18 +215,27 @@ $(function(){
     }
   });
 
+  // MUDANÇA: newPedido agora preenche o horário atual
   $("#newPedido").click(function(){
     $("#formArea").show();
     $("#formTitle").text("Novo Pedido");
     window.pedidoAtual = null;
     pedidoAtualOriginalHorario = null;
-    // clear
+    
+    // Limpar campos
     $("#nome").val(''); $("#numero").val(''); $("#itens").val(''); $("#valor").val('');
     $("#tipoEntrega").val('Entrega');
     $("#endereco").val('');
     $("#pago").prop('checked', false);
     $("#enderecoArea").show();
-    $("#horarioArea").hide(); // JS ainda controla o ID #horarioArea
+    
+    // MUDANÇA: Preencher horário com data/hora ATUAIS
+    var dataAgora = new Date();
+    $("#horarioData").val(toYYYYMMDD(dataAgora));
+    var H = dataAgora.getHours();
+    var M = dataAgora.getMinutes();
+    $("#horaInput").val(H < 10 ? '0' + H : H);
+    $("#minutoInput").val(M < 10 ? '0' + M : M);
   });
 
   $("#cancelar").click(function(){ $("#formArea").hide(); });
@@ -259,30 +261,37 @@ $(function(){
       pago: pago
     };
 
-    if(window.pedidoAtual){
-      // EDITANDO
+    // MUDANÇA: Função unificada para ler o horário (para Edição E Novo)
+    function getHorarioFromInputs() {
       var dateStr = $("#horarioData").val(); 
       var H = parseInt($("#horaInput").val() || '0', 10);
       var M = parseInt($("#minutoInput").val() || '0', 10);
-      var newDate;
+      
       if (!dateStr || dateStr.split('-').length !== 3) {
-        alert('Por favor, selecione uma data válida.'); return;
+        alert('Por favor, selecione uma data válida.'); return null;
       }
       if (H < 0 || H > 23 || M < 0 || M > 59) {
-        alert('Hora ou minuto inválido.'); return;
+        alert('Hora ou minuto inválido.'); return null;
       }
       var parts = dateStr.split('-');
       var Y = parseInt(parts[0], 10);
       var Mo = parseInt(parts[1], 10) - 1; 
       var D = parseInt(parts[2], 10);
-      newDate = new Date(Y, Mo, D, H, M, 0, 0);
+      return new Date(Y, Mo, D, H, M, 0, 0);
+    }
+    
+    var newDate = getHorarioFromInputs();
+    if (newDate === null) return; // Validação falhou
 
+    if(window.pedidoAtual){
+      // EDITANDO
       var originalDate = new Date();
       if (pedidoAtualOriginalHorario) {
           originalDate = pedidoAtualOriginalHorario.toDate();
       }
       originalDate.setSeconds(0, 0); 
 
+      // Só atualiza o horário se for diferente
       if (newDate.getTime() !== originalDate.getTime()) {
         dados.horario = firebase.firestore.Timestamp.fromDate(newDate);
       }
@@ -293,7 +302,9 @@ $(function(){
     
     } else {
       // NOVO PEDIDO
-      dados.horario = firebase.firestore.Timestamp.fromDate(new Date());
+      // MUDANÇA: Usa o horário lido dos inputs
+      dados.horario = firebase.firestore.Timestamp.fromDate(newDate);
+      
       db.collection('pedidos').add(dados).then(function(){
         $("#formArea").hide(); carregar();
       }).catch(function(err){ alert('Erro: '+(err && err.message)); });
@@ -351,6 +362,7 @@ function carregar(filtroData){
   });
 }
 
+// MUDANÇA: 'abrir' agora não precisa mostrar #horarioArea
 function abrir(id){
   window.pedidoAtual = id;
   db.collection('pedidos').doc(id).get().then(function(doc){
@@ -387,7 +399,7 @@ function abrir(id){
     $("#horaInput").val(H < 10 ? '0' + H : H);
     $("#minutoInput").val(M < 10 ? '0' + M : M);
     
-    $("#horarioArea").show(); // JS ainda controla o ID #horarioArea
+    // Nao precisa mais de: $("#horarioArea").show();
 
   }).catch(function(err){ alert('Erro: '+(err && err.message)); });
 }
