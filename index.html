@@ -7,8 +7,9 @@
 </head>
 <body>
 
+<h1 class="header">DuCheffton Lite</h1>
+
 <div id="app">
-  <h1 class="header">DuCheffton Lite</h1>
   <div class="topActions">
     <button id="newPedido" class="btn btn-primary">Novo Pedido</button>
   </div>
@@ -21,7 +22,6 @@
 
 <div id="modalOverlay" style="display:none;">
   <div id="modalContent">
-    
     <div id="formArea">
       <h2 id="formTitle">Novo Pedido</h2>
 
@@ -83,8 +83,10 @@
         <button id="cancelar" class="btn btn-secondary">Cancelar</button>
       </div>
     </div>
-    </div>
+  </div>
 </div>
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -96,15 +98,18 @@ body{
   background:#f8f9fa;
   color:#333;
 }
+/* MUDANÇA: #app não tem mais max-width */
 #app{
-  max-width:680px;
-  margin:0 auto;
-  padding: 0 10px 16px 10px;
+  /* max-width:680px; */ /* REMOVIDO */
+  /* margin:0 auto; */ /* REMOVIDO */
+  padding: 16px; /* MUDANÇA: Adiciona borda no site */
+  box-sizing: border-box;
 }
+/* MUDANÇA: .header não tem mais margem negativa */
 .header{
   font-size:22px;
   font-weight:700;
-  margin:0 -10px 12px -10px;
+  margin:0; /* MUDANÇA */
   padding: 16px;
   text-align:center;
   background: #2c3e50;
@@ -214,7 +219,7 @@ button:hover {
   margin-top:12px;
 }
 
-/* --- MUDANÇA: Estilos do Modal --- */
+/* --- Estilos do Modal --- */
 #modalOverlay {
   position: fixed;
   top: 0;
@@ -223,16 +228,15 @@ button:hover {
   height: 100%;
   background: rgba(0,0,0,0.6);
   z-index: 10;
-  padding: 20px;
+  padding: 16px; /* MUDANÇA: alinhado com o padding do #app */
   box-sizing: border-box;
   display: none; /* Controlado por JS */
 }
 #modalContent {
   background: #fff;
   border-radius: 8px;
-  max-width: 680px;
-  margin: 0 auto;
-  /* Permite scroll no iPad 2 */
+  /* max-width: 680px; */ /* REMOVIDO */
+  /* margin: 0 auto; */ /* REMOVIDO */
   overflow-y: auto; 
   max-height: 95vh;
 }
@@ -251,13 +255,18 @@ button:hover {
 .form-actions {
   margin-top:16px;
   display:flex;
-  gap:8px;
+  gap: 12px; /* MUDANÇA: Aumentado espaçamento */
 }
+/* MUDANÇA: Layout das colunas agora é responsivo */
 .form-columns-wrapper {
   display: flex;
-  gap: 16px;
+  gap: 20px; /* MUDANÇA: Aumentado espaçamento */
+  flex-wrap: wrap; /* MUDANÇA: Permite quebrar em telas menores */
 }
-.form-column { flex: 1; min-width: 0; }
+.form-column { 
+  flex: 1 1 300px; /* MUDANÇA: Base de 300px, cresce e encolhe */
+  min-width: 0; 
+}
 .form-row { display: flex; gap: 8px; margin-top: 8px; align-items: flex-start; }
 .form-field-half { flex: 1; min-width: 0; }
 #itens { height: 104px; }
@@ -287,7 +296,7 @@ window.db = firebase.firestore();
 </script>
 
 <script>
-// App logic
+// O JAVASCRIPT NÃO PRECISA DE MUDANÇAS
 var pedidoAtualOriginalHorario = null; 
 
 function escapeHTML(str) {
@@ -315,7 +324,6 @@ function toYYYYMMDD(date) {
 }
 
 $(function(){
-  // MUDANÇA: Filtro movido para fora do JS
   carregar();
 
   $("#tipoEntrega").change(function(){
@@ -328,7 +336,6 @@ $(function(){
   });
 
   $("#newPedido").click(function(){
-    // MUDANÇA: Mostrar o MODAL
     $("#modalOverlay").show(); 
     $("#formTitle").text("Novo Pedido");
     window.pedidoAtual = null;
@@ -348,7 +355,6 @@ $(function(){
     $("#minutoInput").val(M < 10 ? '0' + M : M);
   });
 
-  // MUDANÇA: Cancelar agora esconde o MODAL
   $("#cancelar").click(function(){ 
     $("#modalOverlay").hide(); 
   });
@@ -408,7 +414,7 @@ $(function(){
       }
       
       db.collection('pedidos').doc(window.pedidoAtual).update(dados).then(function(){
-        $("#modalOverlay").hide(); // MUDANÇA: Esconder o MODAL
+        $("#modalOverlay").hide(); 
         carregar();
       }).catch(function(err){ alert('Erro: '+(err && err.message)); });
     
@@ -417,7 +423,7 @@ $(function(){
       dados.horario = firebase.firestore.Timestamp.fromDate(newDate);
       
       db.collection('pedidos').add(dados).then(function(){
-        $("#modalOverlay").hide(); // MUDANÇA: Esconder o MODAL
+        $("#modalOverlay").hide(); 
         carregar();
       }).catch(function(err){ alert('Erro: '+(err && err.message)); });
     }
@@ -481,7 +487,7 @@ function abrir(id){
   window.pedidoAtual = id;
   db.collection('pedidos').doc(id).get().then(function(doc){
     var d = doc.data() || {};
-    $("#modalOverlay").show(); // MUDANÇA: Mostrar o MODAL
+    $("#modalOverlay").show(); 
     $("#formTitle").text('Editar Pedido');
     
     $("#nome").val(d.nome||'');
