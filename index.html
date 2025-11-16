@@ -8,151 +8,263 @@
 <body>
 
 <div id="app">
-  <h1 class="header">Pedidos</h1>
+  <h1 class="header">DuCheffton Lite</h1>
   <div class="topActions">
-    <button id="newPedido" class="btn">Novo Pedido</button>
+    <button id="newPedido" class="btn btn-primary">Novo Pedido</button>
+  </div>
+  <div class="filterArea">
+    <input type="date" id="filtroData">
+    <button class="btn filter" id="btnFiltrar">Filtrar</button>
   </div>
   <div id="lista"></div>
-  
-  <div id="formArea" style="display:none;">
-    <h2 id="formTitle">Novo Pedido</h2>
+</div>
 
-    <div class="form-columns-wrapper">
-      
-      <div class="form-column" id="colCliente">
-        <h3>Dados do Cliente</h3>
-        
-        <label for="nome">Nome</label>
-        <input id="nome">
-        
-        <label for="numero">Número do cliente</label>
-        <input id="numero" placeholder="Opcional">
-        
-        <label for="tipoEntrega">Entrega ou Retirada?</label>
-        <select id="tipoEntrega">
-          <option value="Entrega">Entrega</option>
-          <option value="Retirada">Retirada</option>
-        </select>
-        
-        <div id="enderecoArea">
-          <label for="endereco">Endereço</label>
-          <input id="endereco" placeholder="Endereço">
+<div id="modalOverlay" style="display:none;">
+  <div id="modalContent">
+    
+    <div id="formArea">
+      <h2 id="formTitle">Novo Pedido</h2>
+
+      <div class="form-columns-wrapper">
+        <div class="form-column" id="colCliente">
+          <h3>Dados do Cliente</h3>
+          
+          <label for="nome">Nome</label>
+          <input id="nome">
+          
+          <label for="numero">Número do cliente</label>
+          <input id="numero" placeholder="Opcional">
+          
+          <label for="tipoEntrega">Entrega ou Retirada?</label>
+          <select id="tipoEntrega">
+            <option value="Entrega">Entrega</option>
+            <option value="Retirada">Retirada</option>
+          </select>
+          
+          <div id="enderecoArea">
+            <label for="endereco">Endereço</label>
+            <input id="endereco" placeholder="Endereço">
+          </div>
         </div>
-      </div>
 
-      <div class="form-column" id="colDetalhes">
-        <h3>Detalhes do Pedido</h3>
-        
-        <label for="itens">Itens do pedido</label>
-        <textarea id="itens" placeholder="Ex: 2x pizza, 1x refrigerante"></textarea>
-        
-        <div class="form-row"> <div class="form-field-half" id="horarioArea"> 
-            <label>Horário</label>
-            <input type="date" id="horarioData" style="margin-bottom: 4px;">
-            <div id="horarioInputsWrapper">
-              <input id="horaInput" type="tel" maxlength="2" placeholder="HH">
-              <input id="minutoInput" type="tel" maxlength="2" placeholder="MM">
+        <div class="form-column" id="colDetalhes">
+          <h3>Detalhes do Pedido</h3>
+          
+          <label for="itens">Itens do pedido</label>
+          <textarea id="itens" placeholder="Ex: 2x pizza, 1x refrigerante"></textarea>
+          
+          <div class="form-row"> <div class="form-field-half" id="horarioArea"> 
+              <label>Horário</label>
+              <input type="date" id="horarioData" style="margin-bottom: 4px;">
+              <div id="horarioInputsWrapper">
+                <input id="horaInput" type="tel" maxlength="2" placeholder="HH">
+                <input id="minutoInput" type="tel" maxlength="2" placeholder="MM">
+              </div>
+            </div>
+
+            <div class="form-field-half" id="valorWrapper">
+              <label for="valor">Valor (R$)</label>
+              <input id="valor" placeholder="0.00" type="number">
             </div>
           </div>
 
-          <div class="form-field-half" id="valorWrapper">
-            <label for="valor">Valor (R$)</label>
-            <input id="valor" placeholder="0.00" type="number">
+          <div class="form-row"> <div class="form-field-half" id="pagoCheckboxWrapper">
+               <input type="checkbox" id="pago">
+            </div>
+            <div class="form-field-half" id="pagoLabelWrapper">
+              <label for="pago">Pedido pago</label> 
+            </div>
           </div>
-        </div>
-
-        <div class="form-row"> <div class="form-field-half" id="pagoCheckboxWrapper">
-             <input type="checkbox" id="pago">
-          </div>
-          <div class="form-field-half" id="pagoLabelWrapper">
-            <label for="pago">Pedido pago</label> 
-          </div>
-        </div>
+        </div> 
       </div> 
 
-    </div> 
-
-    <div style="margin-top:12px;display:flex;gap:8px;">
-      <button id="salvar" class="btn">Salvar</button>
-      <button id="cancelar" class="btn">Cancelar</button>
+      <div class="form-actions">
+        <button id="salvar" class="btn btn-success">Salvar</button>
+        <button id="cancelar" class="btn btn-secondary">Cancelar</button>
+      </div>
     </div>
-  </div>
+    </div>
 </div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <style>
-body{font-family:Arial, Helvetica, sans-serif;margin:0;background:#f4f4f4;color:#222;}
-#app{max-width:680px;margin:0 auto;padding:16px;}
-.header{font-size:22px;font-weight:700;margin:12px 0;text-align:center}
-.topActions{display:flex;gap:10px;margin:10px 0;align-items:center}
-.box{background:#ffffff;border-radius:8px;border:1px solid #e1e1e1;padding:12px;margin:12px 0;box-shadow:none;}
-.box b{font-size:16px}
+body{
+  font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  margin:0;
+  background:#f8f9fa;
+  color:#333;
+}
+#app{
+  max-width:680px;
+  margin:0 auto;
+  padding: 0 10px 16px 10px;
+}
+.header{
+  font-size:22px;
+  font-weight:700;
+  margin:0 -10px 12px -10px;
+  padding: 16px;
+  text-align:center;
+  background: #2c3e50;
+  color: #fff;
+}
+.topActions{
+  display:flex;
+  gap:10px;
+  margin:10px 0;
+  align-items:center;
+}
+.filterArea{
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.filterArea #filtroData {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+.box{
+  background:#ffffff;
+  border-radius:8px;
+  border:1px solid #e1e1e1;
+  padding:12px 14px;
+  margin:12px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.box b{
+  font-size:17px;
+  color: #2c3e50;
+}
 .box .itens-display{
   background:#f9f9f9; 
   padding: 6px 8px; 
-  margin: 6px 0; 
+  margin: 8px 0; 
   border-radius: 4px; 
   border: 1px solid #eee;
   font-size: 14px;
   line-height: 1.4;
   white-space: pre-wrap; 
 }
-input, textarea, select{border:1px solid #ccc;width:100%;padding:8px;border-radius:6px;background:#fff;box-sizing:border-box}
+input, textarea, select{
+  border:1px solid #ccc;
+  width:100%;
+  padding:8px;
+  border-radius:6px;
+  background:#fff;
+  box-sizing:border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 4px rgba(52, 152, 219, 0.4);
+  outline: none;
+}
 label{
   font-size:12px;
   font-weight:bold;
-  color:#444;
+  color:#555;
   display: block;
   margin-bottom: 4px;
 }
-h3{font-size:16px; margin: 12px 0 8px 0; border-bottom: 1px solid #ddd; padding-bottom: 4px;}
-button{cursor:pointer;border-radius:6px}
-.btn{background:#f0f0f0;border:1px solid #d0d0d0;padding:8px 12px;font-weight:700}
-.btn:hover{background:#e8e8e8}
-.btn.del{background:#ffecec;border:1px solid #f2c2c2}
-.btn.filter{background:#e8fbff;border:1px solid #cfeef8}
-#lista{margin-top:12px}
-#formArea{background:#fff;padding:12px;border-radius:8px;border:1px solid #e8e8e8}
-#formTitle{text-align:center;margin-bottom:10px}
+h3{
+  font-size:16px; 
+  margin: 0 0 12px 0; 
+  border-bottom: 1px solid #eee; 
+  padding-bottom: 6px;
+  color: #2c3e50;
+}
+button{
+  cursor:pointer;
+  border-radius:6px;
+  font-weight:700;
+  padding: 8px 12px;
+  border: none;
+  transition: opacity 0.2s;
+}
+button:hover {
+  opacity: 0.85;
+}
+.btn.btn-primary {
+  background: #3498db;
+  color: white;
+}
+.btn.btn-success {
+  background: #27ae60;
+  color: white;
+}
+.btn.btn-secondary {
+  background: #95a5a6;
+  color: white;
+}
+.btn.del{
+  background:#e74c3c;
+  color: white;
+  border: none;
+}
+.btn.filter{
+  background:#ecf0f1;
+  color: #34495e;
+  border: 1px solid #bdc3c7;
+}
+#lista{
+  margin-top:12px;
+}
+
+/* --- MUDANÇA: Estilos do Modal --- */
+#modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  z-index: 10;
+  padding: 20px;
+  box-sizing: border-box;
+  display: none; /* Controlado por JS */
+}
+#modalContent {
+  background: #fff;
+  border-radius: 8px;
+  max-width: 680px;
+  margin: 0 auto;
+  /* Permite scroll no iPad 2 */
+  overflow-y: auto; 
+  max-height: 95vh;
+}
+#formArea{
+  background: transparent;
+  padding: 12px 16px 16px 16px;
+  border: none;
+  border-radius: 0;
+}
+#formTitle{
+  text-align:center;
+  margin-bottom:16px;
+  margin-top: 4px;
+  color: #2c3e50;
+}
+.form-actions {
+  margin-top:16px;
+  display:flex;
+  gap:8px;
+}
 .form-columns-wrapper {
   display: flex;
   gap: 16px;
 }
-.form-column {
-  flex: 1;
-  min-width: 0; 
-}
-.form-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-  align-items: flex-start; 
-}
-.form-field-half {
-  flex: 1;
-  min-width: 0; 
-}
-#itens { 
-  height: 104px; 
-}
-#horarioInputsWrapper { 
-  display: flex; 
-  gap: 8px; 
-}
-#horaInput, #minutoInput { 
-  text-align: center; 
-}
-#pagoCheckboxWrapper { 
-  padding-top: 5px; 
-}
-#pagoLabelWrapper label { 
-  padding-top: 5px; 
-  font-weight: normal; 
-  display: block; 
-}
+.form-column { flex: 1; min-width: 0; }
+.form-row { display: flex; gap: 8px; margin-top: 8px; align-items: flex-start; }
+.form-field-half { flex: 1; min-width: 0; }
+#itens { height: 104px; }
+#horarioInputsWrapper { display: flex; gap: 8px; }
+#horaInput, #minutoInput { text-align: center; }
+#pagoCheckboxWrapper { padding-top: 5px; }
+#pagoLabelWrapper label { padding-top: 5px; font-weight: normal; display: block; }
 label[for="pago"] {
   display: inline-block; 
   margin-bottom: 0;
@@ -203,7 +315,7 @@ function toYYYYMMDD(date) {
 }
 
 $(function(){
-  $("#newPedido").before('<input type="date" id="filtroData" style="margin-right:8px;padding:8px;border-radius:6px;border:1px solid #ccc"> <button class="btn filter" id="btnFiltrar">Filtrar</button>');
+  // MUDANÇA: Filtro movido para fora do JS
   carregar();
 
   $("#tipoEntrega").change(function(){
@@ -215,21 +327,19 @@ $(function(){
     }
   });
 
-  // MUDANÇA: newPedido agora preenche o horário atual
   $("#newPedido").click(function(){
-    $("#formArea").show();
+    // MUDANÇA: Mostrar o MODAL
+    $("#modalOverlay").show(); 
     $("#formTitle").text("Novo Pedido");
     window.pedidoAtual = null;
     pedidoAtualOriginalHorario = null;
     
-    // Limpar campos
     $("#nome").val(''); $("#numero").val(''); $("#itens").val(''); $("#valor").val('');
     $("#tipoEntrega").val('Entrega');
     $("#endereco").val('');
     $("#pago").prop('checked', false);
     $("#enderecoArea").show();
     
-    // MUDANÇA: Preencher horário com data/hora ATUAIS
     var dataAgora = new Date();
     $("#horarioData").val(toYYYYMMDD(dataAgora));
     var H = dataAgora.getHours();
@@ -238,7 +348,10 @@ $(function(){
     $("#minutoInput").val(M < 10 ? '0' + M : M);
   });
 
-  $("#cancelar").click(function(){ $("#formArea").hide(); });
+  // MUDANÇA: Cancelar agora esconde o MODAL
+  $("#cancelar").click(function(){ 
+    $("#modalOverlay").hide(); 
+  });
 
   $("#salvar").click(function(){
     var nome = ($("#nome").val()||'').trim();
@@ -261,7 +374,6 @@ $(function(){
       pago: pago
     };
 
-    // MUDANÇA: Função unificada para ler o horário (para Edição E Novo)
     function getHorarioFromInputs() {
       var dateStr = $("#horarioData").val(); 
       var H = parseInt($("#horaInput").val() || '0', 10);
@@ -281,7 +393,7 @@ $(function(){
     }
     
     var newDate = getHorarioFromInputs();
-    if (newDate === null) return; // Validação falhou
+    if (newDate === null) return; 
 
     if(window.pedidoAtual){
       // EDITANDO
@@ -291,22 +403,22 @@ $(function(){
       }
       originalDate.setSeconds(0, 0); 
 
-      // Só atualiza o horário se for diferente
       if (newDate.getTime() !== originalDate.getTime()) {
         dados.horario = firebase.firestore.Timestamp.fromDate(newDate);
       }
       
       db.collection('pedidos').doc(window.pedidoAtual).update(dados).then(function(){
-        $("#formArea").hide(); carregar();
+        $("#modalOverlay").hide(); // MUDANÇA: Esconder o MODAL
+        carregar();
       }).catch(function(err){ alert('Erro: '+(err && err.message)); });
     
     } else {
       // NOVO PEDIDO
-      // MUDANÇA: Usa o horário lido dos inputs
       dados.horario = firebase.firestore.Timestamp.fromDate(newDate);
       
       db.collection('pedidos').add(dados).then(function(){
-        $("#formArea").hide(); carregar();
+        $("#modalOverlay").hide(); // MUDANÇA: Esconder o MODAL
+        carregar();
       }).catch(function(err){ alert('Erro: '+(err && err.message)); });
     }
   });
@@ -338,7 +450,7 @@ function carregar(filtroData){
       var d = doc.data();
       var dataStr = toLocaleDateStringSafe(d.horario);
       var valorStr = (d.valor != null) ? Number(d.valor).toFixed(2) : '0.00';
-      var pagoStr = d.pago ? ' (Pago)' : '';
+      var pagoStr = d.pago ? ' <span style="color:#27ae60;font-size:12px;font-weight:bold;">(Pago)</span>' : '';
       var nomeStr = escapeHTML(d.nome || '-');
       var numeroStr = d.numero ? 'Tel: ' + escapeHTML(d.numero) + '<br/>' : ''; 
       var tipoStr = escapeHTML(d.tipoEntrega || 'Entrega');
@@ -350,25 +462,28 @@ function carregar(filtroData){
               numeroStr +
               '<i>' + tipoStr + enderecoStr + '</i>' +
               '<div class="itens-display">' + itensStr + '</div>' +
-              dataStr + '<br/>R$ ' + valorStr + '<br/>' +
-              '<button class="btn" onclick="abrir(\''+ doc.id +'\')">Editar</button> ' +
-              '<button class="btn del" onclick="excluir(\''+ doc.id +'\')">Excluir</button>' +
+              '<span>' + dataStr + '</span><br/>' +
+              '<b style="font-size:16px;">R$ ' + valorStr + '</b><br/>' +
+              '<div style="margin-top:10px;display:flex;gap:8px;">' +
+                '<button class="btn btn-primary" onclick="abrir(\''+ doc.id +'\')" style="flex:1;">Editar</button> ' +
+                '<button class="btn del" onclick="excluir(\''+ doc.id +'\')">Excluir</button>' +
+              '</div>' +
               '</div>';
     });
-    $("#lista").html(html || 'Nenhuma pedido.');
+    $("#lista").html(html || 'Nenhum pedido.');
   }).catch(function(err){
     console.error(err);
     $("#lista").html('Erro ao carregar pedidos.');
   });
 }
 
-// MUDANÇA: 'abrir' agora não precisa mostrar #horarioArea
 function abrir(id){
   window.pedidoAtual = id;
   db.collection('pedidos').doc(id).get().then(function(doc){
     var d = doc.data() || {};
-    $("#formArea").show();
+    $("#modalOverlay").show(); // MUDANÇA: Mostrar o MODAL
     $("#formTitle").text('Editar Pedido');
+    
     $("#nome").val(d.nome||'');
     $("#numero").val(d.numero||'');
     $("#itens").val(d.itens||'');
@@ -398,8 +513,6 @@ function abrir(id){
     var M = dataOriginal.getMinutes();
     $("#horaInput").val(H < 10 ? '0' + H : H);
     $("#minutoInput").val(M < 10 ? '0' + M : M);
-    
-    // Nao precisa mais de: $("#horarioArea").show();
 
   }).catch(function(err){ alert('Erro: '+(err && err.message)); });
 }
