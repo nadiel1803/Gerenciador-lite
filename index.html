@@ -3,89 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DuCheffton Lite</title>
+<title>DuCheffton Lite (View)</title>
 </head>
 <body>
 
 <h1 class="header">DuCheffton Lite</h1>
 
 <div id="app">
-  <div class="topActions">
-    <button id="newPedido" class="btn btn-primary">Novo Pedido</button>
-  </div>
   <div class="filterArea">
-    <input type="date" id="filtroData">
-    <button class="btn filter" id="btnFiltrar">Filtrar</button>
+    <input type="search" id="filtroTexto" placeholder="Buscar por nome ou número..." class="form-input">
+    <input type="date" id="filtroData" class="form-input">
+    <button id="btnFiltrar" class="btn btn-primary">Buscar</button>
   </div>
-  <div id="lista"></div>
+  
+  <div id="lista">Carregando pedidos...</div>
 </div>
-
-<div id="modalOverlay" style="display:none;">
-  <div id="modalContent">
-    <div id="formArea">
-      <h2 id="formTitle">Novo Pedido</h2>
-
-      <div class="form-columns-wrapper">
-        <div class="form-column" id="colCliente">
-          <h3>Dados do Cliente</h3>
-          
-          <label for="nome">Nome</label>
-          <input id="nome">
-          
-          <label for="numero">Número do cliente</label>
-          <input id="numero" placeholder="Opcional">
-          
-          <label for="tipoEntrega">Entrega ou Retirada?</label>
-          <select id="tipoEntrega">
-            <option value="Entrega">Entrega</option>
-            <option value="Retirada">Retirada</option>
-          </select>
-          
-          <div id="enderecoArea">
-            <label for="endereco">Endereço</label>
-            <input id="endereco" placeholder="Endereço">
-          </div>
-        </div>
-
-        <div class="form-column" id="colDetalhes">
-          <h3>Detalhes do Pedido</h3>
-          
-          <label for="itens">Itens do pedido</label>
-          <textarea id="itens" placeholder="Ex: 2x pizza, 1x refrigerante"></textarea>
-          
-          <div class="form-row"> <div class="form-field-half" id="horarioArea"> 
-              <label>Horário</label>
-              <input type="date" id="horarioData" style="margin-bottom: 4px;">
-              <div id="horarioInputsWrapper">
-                <input id="horaInput" type="tel" maxlength="2" placeholder="HH">
-                <input id="minutoInput" type="tel" maxlength="2" placeholder="MM">
-              </div>
-            </div>
-
-            <div class="form-field-half" id="valorWrapper">
-              <label for="valor">Valor (R$)</label>
-              <input id="valor" placeholder="0.00" type="number">
-            </div>
-          </div>
-
-          <div class="form-row"> <div class="form-field-half" id="pagoCheckboxWrapper">
-               <input type="checkbox" id="pago">
-            </div>
-            <div class="form-field-half" id="pagoLabelWrapper">
-              <label for="pago">Pedido pago</label> 
-            </div>
-          </div>
-        </div> 
-      </div> 
-
-      <div class="form-actions">
-        <button id="salvar" class="btn btn-success">Salvar</button>
-        <button id="cancelar" class="btn btn-secondary">Cancelar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -95,98 +27,129 @@
 body{
   font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
   margin:0;
-  background:#f8f9fa;
+  background:#f4f4f4; /* Fundo cinza claro */
   color:#333;
+  font-size: 16px; /* Tamanho base maior */
 }
-/* MUDANÇA: #app não tem mais max-width */
 #app{
-  /* max-width:680px; */ /* REMOVIDO */
-  /* margin:0 auto; */ /* REMOVIDO */
-  padding: 16px; /* MUDANÇA: Adiciona borda no site */
+  padding: 16px;
   box-sizing: border-box;
 }
-/* MUDANÇA: .header não tem mais margem negativa */
 .header{
-  font-size:22px;
+  font-size:24px;
   font-weight:700;
-  margin:0; /* MUDANÇA */
+  margin:0;
   padding: 16px;
   text-align:center;
-  background: #2c3e50;
+  background: #2c3e50; /* Header escuro */
   color: #fff;
-}
-.topActions{
-  display:flex;
-  gap:10px;
-  margin:10px 0;
-  align-items:center;
 }
 .filterArea{
   display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap; /* Responsivo */
 }
-.filterArea #filtroData {
-  flex: 1;
-  padding: 8px;
-  border-radius: 6px;
+.form-input {
   border: 1px solid #ccc;
+  width: 100%;
+  padding: 12px; /* Inputs maiores */
+  font-size: 16px;
+  border-radius: 8px;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus {
+  border-color: #e67e22; /* Foco Laranja */
+  box-shadow: 0 0 5px rgba(230, 126, 34, 0.4);
+  outline: none;
+}
+#filtroTexto {
+  flex: 2 1 250px; /* Campo de busca maior */
+}
+#filtroData {
+  flex: 1 1 150px;
 }
 .box{
   background:#ffffff;
-  border-radius:8px;
-  border:1px solid #e1e1e1;
-  padding:12px 14px;
-  margin:12px 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-radius:10px;
+  border:1px solid #ddd;
+  padding: 16px;
+  margin: 16px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s ease-out; /* Animação simples */
 }
-.box b{
-  font-size:17px;
-  color: #2c3e50;
+/* Animação compatível com iPad 2 */
+.box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+}
+.box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed #eee;
+  padding-bottom: 8px;
+}
+.box-header b{
+  font-size: 22px; /* Nome bem grande */
+  color: #e67e22; /* Laranja */
+  font-weight: 700;
+}
+.pago-span {
+  font-size: 14px;
+  font-weight: bold;
+  color: #27ae60; /* Verde */
+  background: #eafaf1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.box-cliente-info {
+  font-size: 16px;
+  color: #555;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.box-cliente-info i {
+  display: block; /* Para 'Entrega' ficar em linha separada */
+  font-style: normal;
 }
 .box .itens-display{
-  background:#f9f9f9; 
-  padding: 6px 8px; 
-  margin: 8px 0; 
-  border-radius: 4px; 
-  border: 1px solid #eee;
-  font-size: 14px;
-  line-height: 1.4;
+  background:#fdfdfd; 
+  padding: 10px; 
+  margin: 10px 0; 
+  border-radius: 6px; 
+  border: 1px solid #f0f0f0;
+  font-size: 16px;
+  line-height: 1.5;
   white-space: pre-wrap; 
 }
-input, textarea, select{
-  border:1px solid #ccc;
-  width:100%;
-  padding:8px;
-  border-radius:6px;
-  background:#fff;
-  box-sizing:border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+.box-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 12px;
 }
-input:focus, textarea:focus, select:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 4px rgba(52, 152, 219, 0.4);
-  outline: none;
+.data-pedido {
+  font-size: 14px;
+  color: #777;
 }
-label{
-  font-size:12px;
-  font-weight:bold;
-  color:#555;
-  display: block;
-  margin-bottom: 4px;
-}
-h3{
-  font-size:16px; 
-  margin: 0 0 12px 0; 
-  border-bottom: 1px solid #eee; 
-  padding-bottom: 6px;
-  color: #2c3e50;
+.valor-pedido {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
 }
 button{
   cursor:pointer;
-  border-radius:6px;
+  border-radius: 8px;
   font-weight:700;
-  padding: 8px 12px;
+  padding: 12px 16px; /* Botões maiores */
+  font-size: 16px;
   border: none;
   transition: opacity 0.2s;
 }
@@ -194,90 +157,13 @@ button:hover {
   opacity: 0.85;
 }
 .btn.btn-primary {
-  background: #3498db;
+  background: #e67e22; /* Laranja */
   color: white;
-}
-.btn.btn-success {
-  background: #27ae60;
-  color: white;
-}
-.btn.btn-secondary {
-  background: #95a5a6;
-  color: white;
-}
-.btn.del{
-  background:#e74c3c;
-  color: white;
-  border: none;
-}
-.btn.filter{
-  background:#ecf0f1;
-  color: #34495e;
-  border: 1px solid #bdc3c7;
+  flex: 1 1 100px;
 }
 #lista{
   margin-top:12px;
-}
-
-/* --- Estilos do Modal --- */
-#modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  z-index: 10;
-  padding: 16px; /* MUDANÇA: alinhado com o padding do #app */
-  box-sizing: border-box;
-  display: none; /* Controlado por JS */
-}
-#modalContent {
-  background: #fff;
-  border-radius: 8px;
-  /* max-width: 680px; */ /* REMOVIDO */
-  /* margin: 0 auto; */ /* REMOVIDO */
-  overflow-y: auto; 
-  max-height: 95vh;
-}
-#formArea{
-  background: transparent;
-  padding: 12px 16px 16px 16px;
-  border: none;
-  border-radius: 0;
-}
-#formTitle{
-  text-align:center;
-  margin-bottom:16px;
-  margin-top: 4px;
-  color: #2c3e50;
-}
-.form-actions {
-  margin-top:16px;
-  display:flex;
-  gap: 12px; /* MUDANÇA: Aumentado espaçamento */
-}
-/* MUDANÇA: Layout das colunas agora é responsivo */
-.form-columns-wrapper {
-  display: flex;
-  gap: 20px; /* MUDANÇA: Aumentado espaçamento */
-  flex-wrap: wrap; /* MUDANÇA: Permite quebrar em telas menores */
-}
-.form-column { 
-  flex: 1 1 300px; /* MUDANÇA: Base de 300px, cresce e encolhe */
-  min-width: 0; 
-}
-.form-row { display: flex; gap: 8px; margin-top: 8px; align-items: flex-start; }
-.form-field-half { flex: 1; min-width: 0; }
-#itens { height: 104px; }
-#horarioInputsWrapper { display: flex; gap: 8px; }
-#horaInput, #minutoInput { text-align: center; }
-#pagoCheckboxWrapper { padding-top: 5px; }
-#pagoLabelWrapper label { padding-top: 5px; font-weight: normal; display: block; }
-label[for="pago"] {
-  display: inline-block; 
-  margin-bottom: 0;
-  font-weight: normal;
+  padding-top: 10px;
 }
 </style>
 
@@ -296,8 +182,8 @@ window.db = firebase.firestore();
 </script>
 
 <script>
-// O JAVASCRIPT NÃO PRECISA DE MUDANÇAS
-var pedidoAtualOriginalHorario = null; 
+// Cache global para os pedidos (evita buscas no Firebase ao digitar)
+var allPedidos = []; 
 
 function escapeHTML(str) {
   if (!str) return '';
@@ -316,216 +202,99 @@ function toLocaleDateStringSafe(ts){
   }catch(e){ return '-'; }
 }
 
-function toYYYYMMDD(date) {
-  var Y = date.getFullYear();
-  var Mo = date.getMonth() + 1;
-  var D = date.getDate();
-  return Y + '-' + (Mo < 10 ? '0' + Mo : Mo) + '-' + (D < 10 ? '0' + D : D);
-}
-
 $(function(){
-  carregar();
+  // 1. Carrega a lista inicial (todos ativos)
+  carregarLista();
 
-  $("#tipoEntrega").change(function(){
-    if($(this).val() === 'Entrega'){
-      $("#enderecoArea").show();
-    } else {
-      $("#enderecoArea").hide();
-      $("#endereco").val(''); 
-    }
-  });
-
-  $("#newPedido").click(function(){
-    $("#modalOverlay").show(); 
-    $("#formTitle").text("Novo Pedido");
-    window.pedidoAtual = null;
-    pedidoAtualOriginalHorario = null;
-    
-    $("#nome").val(''); $("#numero").val(''); $("#itens").val(''); $("#valor").val('');
-    $("#tipoEntrega").val('Entrega');
-    $("#endereco").val('');
-    $("#pago").prop('checked', false);
-    $("#enderecoArea").show();
-    
-    var dataAgora = new Date();
-    $("#horarioData").val(toYYYYMMDD(dataAgora));
-    var H = dataAgora.getHours();
-    var M = dataAgora.getMinutes();
-    $("#horaInput").val(H < 10 ? '0' + H : H);
-    $("#minutoInput").val(M < 10 ? '0' + M : M);
-  });
-
-  $("#cancelar").click(function(){ 
-    $("#modalOverlay").hide(); 
-  });
-
-  $("#salvar").click(function(){
-    var nome = ($("#nome").val()||'').trim();
-    var itens = ($("#itens").val()||'').trim();
-    var valor = parseFloat(($("#valor").val()||'0').replace(',','.')) || 0;
-    if(!nome || !itens){ alert('Preencha nome e itens'); return; }
-    
-    var tipoEntrega = $("#tipoEntrega").val();
-    var endereco = (tipoEntrega === 'Entrega') ? ($("#endereco").val()||'').trim() : null;
-    var pago = $("#pago").is(':checked');
-
-    var dados = {
-      nome: nome,
-      numero: ($("#numero").val()||'').trim() || null,
-      itens: itens,
-      valor: valor,
-      status: 'active',
-      tipoEntrega: tipoEntrega,
-      endereco: endereco,
-      pago: pago
-    };
-
-    function getHorarioFromInputs() {
-      var dateStr = $("#horarioData").val(); 
-      var H = parseInt($("#horaInput").val() || '0', 10);
-      var M = parseInt($("#minutoInput").val() || '0', 10);
-      
-      if (!dateStr || dateStr.split('-').length !== 3) {
-        alert('Por favor, selecione uma data válida.'); return null;
-      }
-      if (H < 0 || H > 23 || M < 0 || M > 59) {
-        alert('Hora ou minuto inválido.'); return null;
-      }
-      var parts = dateStr.split('-');
-      var Y = parseInt(parts[0], 10);
-      var Mo = parseInt(parts[1], 10) - 1; 
-      var D = parseInt(parts[2], 10);
-      return new Date(Y, Mo, D, H, M, 0, 0);
-    }
-    
-    var newDate = getHorarioFromInputs();
-    if (newDate === null) return; 
-
-    if(window.pedidoAtual){
-      // EDITANDO
-      var originalDate = new Date();
-      if (pedidoAtualOriginalHorario) {
-          originalDate = pedidoAtualOriginalHorario.toDate();
-      }
-      originalDate.setSeconds(0, 0); 
-
-      if (newDate.getTime() !== originalDate.getTime()) {
-        dados.horario = firebase.firestore.Timestamp.fromDate(newDate);
-      }
-      
-      db.collection('pedidos').doc(window.pedidoAtual).update(dados).then(function(){
-        $("#modalOverlay").hide(); 
-        carregar();
-      }).catch(function(err){ alert('Erro: '+(err && err.message)); });
-    
-    } else {
-      // NOVO PEDIDO
-      dados.horario = firebase.firestore.Timestamp.fromDate(newDate);
-      
-      db.collection('pedidos').add(dados).then(function(){
-        $("#modalOverlay").hide(); 
-        carregar();
-      }).catch(function(err){ alert('Erro: '+(err && err.message)); });
-    }
-  });
-
+  // 2. Botão "Buscar" (data) - Recarrega do Firebase
   $(document).on('click','#btnFiltrar', function(){
     var val = $("#filtroData").val();
     if(val){
       var parts = val.split('-'); 
       var dt = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
-      carregar(dt);
+      carregarLista(dt); // Busca por data
     } else {
-      carregar();
+      carregarLista(); // Busca todos ativos
     }
   });
-
+  
+  // 3. Pesquisa (texto) - Filtra a lista já carregada (rápido)
+  $(document).on('keyup', '#filtroTexto', function(){
+    renderizarLista(); // Apenas re-renderiza o cache
+  });
 });
 
-function carregar(filtroData){
-  $("#lista").html('Carregando...');
+// Passo 1: Busca dados do Firebase e salva no cache
+function carregarLista(filtroData){
+  $("#lista").html('Carregando pedidos...');
   var ref = db.collection('pedidos').where('status','==','active').orderBy('horario','asc');
+  
   if(filtroData){
     var inicio = new Date(filtroData.getFullYear(), filtroData.getMonth(), filtroData.getDate());
     var fim = new Date(inicio); fim.setDate(fim.getDate()+1);
     ref = db.collection('pedidos').where('status','==','active').where('horario','>=', firebase.firestore.Timestamp.fromDate(inicio)).where('horario','<', firebase.firestore.Timestamp.fromDate(fim)).orderBy('horario','asc');
   }
+  
   ref.get().then(function(snap){
-    var html = '';
+    window.allPedidos = []; // Limpa o cache
     snap.forEach(function(doc){
       var d = doc.data();
-      var dataStr = toLocaleDateStringSafe(d.horario);
-      var valorStr = (d.valor != null) ? Number(d.valor).toFixed(2) : '0.00';
-      var pagoStr = d.pago ? ' <span style="color:#27ae60;font-size:12px;font-weight:bold;">(Pago)</span>' : '';
-      var nomeStr = escapeHTML(d.nome || '-');
-      var numeroStr = d.numero ? 'Tel: ' + escapeHTML(d.numero) + '<br/>' : ''; 
-      var tipoStr = escapeHTML(d.tipoEntrega || 'Entrega');
-      var enderecoStr = (tipoStr === 'Entrega') ? (': ' + escapeHTML(d.endereco||'N/D')) : '';
-      var itensStr = escapeHTML(d.itens || '-');
-
-      html += '<div class="box">' +
-              '<b>'+ nomeStr +'</b>' + pagoStr + '<br/>' +
-              numeroStr +
-              '<i>' + tipoStr + enderecoStr + '</i>' +
-              '<div class="itens-display">' + itensStr + '</div>' +
-              '<span>' + dataStr + '</span><br/>' +
-              '<b style="font-size:16px;">R$ ' + valorStr + '</b><br/>' +
-              '<div style="margin-top:10px;display:flex;gap:8px;">' +
-                '<button class="btn btn-primary" onclick="abrir(\''+ doc.id +'\')" style="flex:1;">Editar</button> ' +
-                '<button class="btn del" onclick="excluir(\''+ doc.id +'\')">Excluir</button>' +
-              '</div>' +
-              '</div>';
+      window.allPedidos.push(d); // Salva no cache
     });
-    $("#lista").html(html || 'Nenhum pedido.');
+    renderizarLista(); // Renderiza pela primeira vez
   }).catch(function(err){
     console.error(err);
     $("#lista").html('Erro ao carregar pedidos.');
   });
 }
 
-function abrir(id){
-  window.pedidoAtual = id;
-  db.collection('pedidos').doc(id).get().then(function(doc){
-    var d = doc.data() || {};
-    $("#modalOverlay").show(); 
-    $("#formTitle").text('Editar Pedido');
-    
-    $("#nome").val(d.nome||'');
-    $("#numero").val(d.numero||'');
-    $("#itens").val(d.itens||'');
-    $("#valor").val(d.valor != null ? d.valor : '');
-    
-    $("#tipoEntrega").val(d.tipoEntrega || 'Entrega');
-    $("#endereco").val(d.endereco || '');
-    $("#pago").prop('checked', d.pago || false);
-    
-    if($("#tipoEntrega").val() === 'Entrega'){
-      $("#enderecoArea").show();
-    } else {
-      $("#enderecoArea").hide();
-    }
+// Passo 2: Renderiza o cache (aplicando filtro de texto)
+function renderizarLista(){
+  var termoBusca = ($("#filtroTexto").val() || '').trim().toLowerCase();
+  var pedidosFiltrados = window.allPedidos;
 
-    var dataOriginal = new Date();
-    if(d.horario && typeof d.horario.toDate === 'function') {
-      pedidoAtualOriginalHorario = d.horario;
-      dataOriginal = d.horario.toDate();
-    } else {
-      pedidoAtualOriginalHorario = firebase.firestore.Timestamp.fromDate(dataOriginal);
-    }
+  // Filtra o cache 'allPedidos' se houver termo de busca
+  if (termoBusca) {
+    pedidosFiltrados = window.allPedidos.filter(function(d){
+      var nome = (d.nome || '').toLowerCase();
+      var numero = (d.numero || '').toLowerCase();
+      return nome.indexOf(termoBusca) > -1 || numero.indexOf(termoBusca) > -1;
+    });
+  }
+  
+  // Geração do HTML (com novo layout de card)
+  var html = '';
+  pedidosFiltrados.forEach(function(d){
+    var dataStr = toLocaleDateStringSafe(d.horario);
+    var valorStr = (d.valor != null) ? Number(d.valor).toFixed(2) : '0.00';
+    var pagoStr = d.pago ? '<span class="pago-span">Pago</span>' : '';
     
-    $("#horarioData").val(toYYYYMMDD(dataOriginal));
+    var nomeStr = escapeHTML(d.nome || '-');
+    var numeroStr = d.numero ? '<span>Tel: ' + escapeHTML(d.numero) + '</span>' : ''; 
     
-    var H = dataOriginal.getHours();
-    var M = dataOriginal.getMinutes();
-    $("#horaInput").val(H < 10 ? '0' + H : H);
-    $("#minutoInput").val(M < 10 ? '0' + M : M);
+    var tipoStr = escapeHTML(d.tipoEntrega || 'Entrega');
+    var enderecoStr = (tipoStr === 'Entrega') ? (': ' + escapeHTML(d.endereco||'N/D')) : '';
+    
+    var itensStr = escapeHTML(d.itens || '-');
 
-  }).catch(function(err){ alert('Erro: '+(err && err.message)); });
-}
-
-function excluir(id){
-  if(!confirm('Deseja excluir este pedido?')) return;
-  db.collection('pedidos').doc(id).delete().then(function(){ carregar(); }).catch(function(err){ alert('Erro ao excluir: '+(err && err.message)); });
+    html += '<div class="box">' +
+              '<div class="box-header">' +
+                '<b>'+ nomeStr +'</b>' + 
+                pagoStr +
+              '</div>' +
+              '<div class="box-cliente-info">' +
+                numeroStr +
+                '<i>' + tipoStr + enderecoStr + '</i>' +
+              '</div>' +
+              '<div class="itens-display">' + itensStr + '</div>' +
+              '<div class="box-footer">' +
+                '<span class="data-pedido">' + dataStr + '</span>' +
+                '<span class="valor-pedido">R$ ' + valorStr + '</span>' +
+              '</div>' +
+            '</div>';
+  });
+  
+  $("#lista").html(html || '<div class="box">Nenhum pedido encontrado.</div>');
 }
 
 </script>
